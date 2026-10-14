@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deepwick-pygments"
+version = "1.0.0"
+description = "Deepwick Pygments style, for pgcli and other Pygments users"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+dependencies = ["pygments>=2.17"]
+
+[project.entry-points."pygments.styles"]
+deepwick = "deepwick_pygments:DeepwickStyle"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["deepwick_pygments.py"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["deepwick_pygments.py", "README.md", "LICENSE"]

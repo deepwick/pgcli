@@ -1,0 +1,32 @@
+# Deepwick for pgcli. Merge into ~/.config/pgcli/config: set syntax_style in
+# [main] and replace the existing [colors] section (pgcli rejects a second one).
+[main]
+syntax_style = deepwick
+
+[colors]
+prompt = 'bold #569CD6'
+continuation = '#6E7899'
+completion-menu.completion.current = 'bg:#264F78 #D4D4D4'
+completion-menu.completion = 'bg:#10192C #D4D4D4'
+completion-menu.meta.completion.current = 'bg:#264F78 #7A86A8'
+completion-menu.meta.completion = 'bg:#10192C #7A86A8'
+completion-menu.multi-column-meta = 'bg:#10192C #7A86A8'
+scrollbar.arrow = 'bg:#1B2140'
+scrollbar = 'bg:#1B2140'
+selected = '#D4D4D4 bg:#264F78'
+search = '#D4D4D4 bg:#264F78'
+search.current = '#D7BA7D bg:#264F78'
+bottom-toolbar = 'bg:#10192C #D4D4D4'
+bottom-toolbar.off = 'bg:#10192C #6E7899'
+bottom-toolbar.on = 'bg:#10192C #D4D4D4'
+search-toolbar = 'noinherit bold'
+search-toolbar.text = 'nobold'
+system-toolbar = 'noinherit bold'
+arg-toolbar = 'noinherit bold'
+arg-toolbar.text = 'nobold'
+bottom-toolbar.transaction.valid = 'bg:#10192C #57A64A bold'
+bottom-toolbar.transaction.failed = 'bg:#10192C #F44747 bold'
+output.header = 'bold #569CD6'
+output.odd-row = ''
+output.even-row = ''
+output.null = '#6E7899'
