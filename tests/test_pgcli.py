@@ -143,12 +143,41 @@ def postgres():
         subprocess.run(["podman", "stop", "-t", "1", cid], capture_output=True)
 
 
-def pgcli_env(tmp_path):
+MERGE = r'''
+import sys
+from pathlib import Path
+import pgcli
+from configobj import ConfigObj
+from pgcli.config import write_default_config
+rc, theme = sys.argv[1], sys.argv[2]
+write_default_config(str(Path(pgcli.__file__).with_name("pgclirc")), rc)
+cfg = ConfigObj(rc, encoding="utf-8", list_values=False, interpolation=False)
+cfg["main"]["syntax_style"] = "deepwick"
+cfg["colors"] = ConfigObj(theme, encoding="utf-8", list_values=False, interpolation=False)["colors"]
+cfg.write()
+'''
+
+
+def merged_config(venv, dest):
+    """The README's install: the default pgclirc with syntax_style set and [colors] replaced."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run([str(venv / "bin" / "python"), "-c", MERGE, str(dest), str(RC)], check=True)
+    return dest
+
+
+def pgcli_env(tmp_path, venv):
     env = isolated_env(tmp_path, TERM="xterm-256color", PROMPT_TOOLKIT_COLOR_DEPTH="DEPTH_24_BIT", PAGER="cat")
-    config = Path(env["XDG_CONFIG_HOME"]) / "pgcli"
-    config.mkdir(parents=True)
-    shutil.copy(RC, config / "config")
+    merged_config(venv, Path(env["XDG_CONFIG_HOME"]) / "pgcli" / "config")
     return env
+
+
+def test_readme_merge_loads(tmp_path, venv):
+    rc = merged_config(venv, tmp_path / "config")
+    code = "import sys; from pgcli.main import PGCli; p = PGCli(pgclirc_file=sys.argv[1]); print(p.syntax_style)"
+    out = subprocess.run([str(venv / "bin" / "python"), "-c", code, str(rc)], capture_output=True, text=True,
+                         env={"HOME": str(tmp_path), "PATH": "/usr/bin:/bin"})
+    assert out.returncode == 0, out.stderr
+    assert out.stdout.splitlines()[-1] == "deepwick"
 
 
 def pgcli_command(venv, port):
@@ -160,7 +189,7 @@ requires_tmux = pytest.mark.skipif(not tmux_available(), reason="requires tmux")
 
 @requires_tmux
 def test_pgcli_prompt_and_syntax(tmp_path, venv, postgres):
-    out = capture(pgcli_command(venv, postgres), pgcli_env(tmp_path), size=(110, 24), wait_for="postgres>",
+    out = capture(pgcli_command(venv, postgres), pgcli_env(tmp_path, venv), size=(110, 24), wait_for="postgres>",
                   literal="SELECT 'hi', 42 -- note", after="note", timeout=30)
     prompt = style_containing(out, "postgres@")
     assert (prompt["fg"], prompt["bold"]) == (C["blue"].lower(), True)
@@ -174,7 +203,7 @@ def test_pgcli_prompt_and_syntax(tmp_path, venv, postgres):
 
 @requires_tmux
 def test_pgcli_table_output(tmp_path, venv, postgres):
-    out = capture(pgcli_command(venv, postgres), pgcli_env(tmp_path), size=(110, 24), wait_for="postgres>",
+    out = capture(pgcli_command(venv, postgres), pgcli_env(tmp_path, venv), size=(110, 24), wait_for="postgres>",
                   literal="SELECT id, label FROM fixture ORDER BY id;", keys=("Enter",), after="SELECT 2", timeout=30)
     header = runs(line_with(out, "| label"))
     assert any("label" in chunk and s["fg"] == C["blue"].lower() and s["bold"] for chunk, s in header)
